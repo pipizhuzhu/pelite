@@ -1,5 +1,5 @@
 
-use std::env;
+use std::{env, fs};
 use std::path::PathBuf;
 
 fn parse_arg() -> Option<PathBuf> {
@@ -16,17 +16,21 @@ fn main() {
 		},
 		Some(path) => {
 			let filemap = pelite::FileMap::open(&path).unwrap();
-			parse(filemap.as_ref());
+			let mut patched = filemap.as_ref().to_vec();
+			parse(filemap.as_ref(), &mut patched);
+			fs::write("Overwatch.patched.bin", &patched).unwrap();
 		},
 	}
 }
 
-fn parse(image: &[u8]) {
+fn parse(image: &[u8], patched: &mut [u8]) {
 	use pelite::pe64::*;
 	let bin = PeFile::from_bytes(image).unwrap();
 	misc::print(bin);
 	globals::print(bin);
+	strings::print(bin, patched);
 }
 
 mod globals;
 mod misc;
+mod strings;
